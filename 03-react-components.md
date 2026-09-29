@@ -4,7 +4,7 @@ Load when creating or changing React components, shared UI, repeated markup, dia
 
 ## Rules
 
-- When designing a reusable component API, choose props-driven vs composition slots vs compound first — load [`05-react-composition.md`](05-react-composition.md).
+- When designing a reusable component API, choose props-driven vs composition slots vs compound first — load [`05-react-composition.md`](05-react-composition.md). If a compound already covers the layout, compose its parts. Do not replace them with `ReactNode` props.
 - Do not create multiple components that render the same purpose or duplicate the same markup.
 - Use one shared component for repeated UI patterns such as dialogs, modals, forms, tables, buttons, and list items.
 - For dialogs, use a single reusable dialog component/configuration pattern instead of rendering many different dialog components with duplicated structure.
@@ -13,6 +13,7 @@ Load when creating or changing React components, shared UI, repeated markup, dia
 - Keep components focused on rendering and orchestration.
 - Move complex state transformations, filtering, mapping, validation, and formatting into helpers or hooks when it improves clarity.
 - Do not pass React state setters directly to child components.
+- Do not pass `className` into a child to apply a look that follows the parent's state. The child owns that look behind a closed prop (`offset`, `size`). Details: [`05-react-composition.md`](05-react-composition.md).
 
 ## Typography And Color
 
@@ -43,3 +44,4 @@ When a component owns a closed set of actions or looks, expose a domain union an
 - Dialogs/modals use one shared pattern.
 - Complex logic is not buried inside JSX.
 - Children receive values and semantic callbacks, not raw setters.
+- No parent passes `className` into a child to encode the parent's state. The child maps its own variant to classes.

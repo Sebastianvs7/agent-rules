@@ -1,6 +1,6 @@
 # Design System Variant Classes
 
-Load when the project has a design system (atoms, molecules, `*-variants.ts`). Use this file when creating or editing `*-variants.ts` files, composing Tailwind class maps for design-system atoms/molecules, deciding barrel exports, visual token consistency (border/radius/spacing), or whether one DS atom may import another’s private helpers.
+Load when the project has a design system (atoms, molecules, `*-variants.ts`). Use this file when creating or editing `*-variants.ts` files, composing Tailwind class maps for design-system atoms/molecules, deciding barrel exports, visual token consistency (border/radius/spacing), whether one DS atom may import another’s private helpers, or whether a caller may pass `className` to a design-system component.
 
 ## Base vs Variant Maps
 
@@ -79,6 +79,18 @@ import { getFillPercent } from './get-fill-percent';
 import { atomBFillClasses } from './atom-b-variants';
 ```
 
+## className Is a Temporary Escape Hatch
+
+Design-system components may keep `className` for now, same as the rest of the system, so a missing gap can be patched quickly.
+
+Do not use that prop to supply a look or behavior the component should own (`sticky`, a size, a surface, an offset). That means the public variants are incomplete: add a closed prop (`size`, `offset`) and map it to classes inside the component.
+
+A parent must not pass `className` into a child because of the parent's state. The child then has a look that its tests and stories never show. The parent passes the variant; the child applies the classes. Details: [`05-react-composition.md`](05-react-composition.md).
+
+Story and page layout (column width, demo scroll shell) stays on a wrapper around the component. Do not pass those classes through `className`.
+
+Passing variant classes from a molecule onto an atom root it specializes is internal composition, not this escape hatch. Passing classes into a nested part (`Content`, `Header`) is not.
+
 ## Self-Check
 
 - No shared class is repeated across every entry of a size/variant map.
@@ -87,3 +99,4 @@ import { atomBFillClasses } from './atom-b-variants';
 - Barrel does not re-export `*Classes` / variant class maps; public types are exported selectively when needed.
 - Borders/radius/spacing match DS conventions unless design says otherwise.
 - No private cross-atom imports (helpers / `*-variants` class constants); small helpers are local when needed.
+- Callers do not pass `className` for a look the component should own; a parent passes a closed variant, not classes, into a nested part. Story and page layout stays on a wrapper.

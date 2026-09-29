@@ -1,6 +1,6 @@
 # React Composition Rules
 
-Load when designing component composition, choosing a reusable component API model (props-driven vs slots vs compound), reusable logic wrappers, function-as-children APIs, render props, flexible UI slots, deciding whether a shell may rewrite slot children from `state`/`variant`, whether layout-only groups may mix items with trailing adornments, or whether to extend an existing root vs wrap it.
+Load when designing component composition, choosing a reusable component API model (props-driven vs slots vs compound), reusable logic wrappers, function-as-children APIs, render props, flexible UI slots, deciding whether a shell may rewrite slot children from `state`/`variant`, whether layout-only groups may mix items with trailing adornments, string prop vs composition part, whether to extend an existing root vs wrap it, whether a parent may pass `className` into a child to express the parent's state (it may not — the child exposes a closed variant and owns the classes), or whether a new shell may replace an existing compound's parts with loose `ReactNode` props (it may not — compose the compound).
 
 ## Choose An API Model First
 
@@ -117,6 +117,33 @@ Same idea: a `variant` prop may map colors only — it must not auto-pick an ico
 - Shared state via context; parts keep their own props.
 - Use when structure is fixed and parts need the same parent state — not when a single slot is enough.
 
+If a compound already owns those regions, do not add another shell that takes the same regions as loose `ReactNode` props. That throws away the parts. Compose the existing compound.
+
+```tsx
+// BAD — CardLayout already has image, price, and controls parts
+<ToolCard
+  image={<img alt="" src={src} />}
+  price={<span>5 000</span>}
+  action={<Button label="Select" />}
+>
+  <Title />
+</ToolCard>
+
+// GOOD — caller composes the compound that already owns those slots
+<SelectionCard selected={selected}>
+  <CardLayout>
+    <CardLayoutImage alt="" src={src} />
+    <CardLayoutContent>
+      <Title />
+      <CardLayoutPrice price="5 000" />
+    </CardLayoutContent>
+    <CardLayoutControls>
+      <Button label="Select" />
+    </CardLayoutControls>
+  </CardLayout>
+</SelectionCard>
+```
+
 ## Extend Root, Do Not Wrap
 
 When specializing an existing atom/molecule, make that atom the **root** of the new component. Pass through or override `className`, `data-testid`, and variant props.
@@ -159,6 +186,55 @@ Do not put trailing adornments (error, hint, footer) inside the same flex/gap co
 
 Prefer a dedicated adornment component (`ItemGroupError`) over an `errorMessage` prop on the layout-only group.
 
+## Parent Controls A Variant, Not The Child's Classes
+
+A component owns its look: padding, type size, offset, border. The parent says which of those states to use. It does not say which classes produce them.
+
+Passing `className` from a parent into a child because of the parent's state is the signal that the child API is incomplete. That look is then invisible in the child's own tests and stories. A component with only `className` for its styling is a `div`.
+
+Expose a closed union and map it to classes inside the child. The parent passes the variant. A plain element around the child may own layout classes instead. Both of these are fine. Passing `className` into the child is not.
+
+```tsx
+// BAD — parent pushes its state into the child's className
+const Comp1 = ({ expanded }) => (
+  <Wrapper>
+    <Title>abc</Title>
+    <Content className={expanded ? 'mt-8' : ''} />
+  </Wrapper>
+);
+
+// GOOD — child owns the offset; parent only picks the variant
+const Comp2 = ({ expanded }) => (
+  <Wrapper>
+    <Title>abc</Title>
+    <Content offset={expanded ? 'md' : 'none'} />
+  </Wrapper>
+);
+
+// GOOD — layout class stays on a plain element, not on the component
+const Comp3 = ({ expanded }) => (
+  <Wrapper>
+    <Title>abc</Title>
+    <div className={expanded ? 'mt-8' : ''}>
+      <Content />
+    </div>
+  </Wrapper>
+);
+```
+
+```tsx
+type ContentOffset = 'md' | 'none';
+
+const contentOffsetClasses: Record<ContentOffset, string> = {
+  md: 'mt-8',
+  none: '',
+};
+```
+
+Same for type size, padding, and any other look: the caller picks `size="lg"`, the component applies `text-lg`. Do not accept `className` so a caller can set `text-lg` themselves.
+
+`className` on a design-system component, when the project has one and the prop still exists, is only the temporary escape hatch in [`10-design-system-variants.md`](10-design-system-variants.md). It is not how a parent styles a child. Specializing an existing root (the new component *is* that atom) is a different case — see Extend Root above.
+
 ## Render Props
 
 - Use function-as-children / render props when a child needs parent-owned state, computed values, or actions without low-level implementation details.
@@ -186,10 +262,12 @@ Prefer a dedicated adornment component (`ItemGroupError`) over an `errorMessage`
 - No props exist only to configure nested UI (`*Type`, boolean+loader pairs that belong to a child).
 - Adjacent title/label content uses `children` or a compound part when the shell does not place it elsewhere.
 - Slots or compound parts are used instead of drilling nested config through the shell.
+- An existing compound is composed. A new shell does not replace its parts with loose `ReactNode` props (`image`, `price`, `action`).
 - Slot `ReactNode` props are rendered as-is — shell does not rewrite them from `state` / `variant` / similar.
 - Specializations use the existing atom as root — no wrapper `div` only for test id or width.
 - Layout-only list/group children are homogeneous — errors/hints sit as siblings with their own `mt-*`, not inside the item gap.
 - Nested UI reuses existing design-system atoms/molecules when they already exist.
+- A parent does not pass `className` into a child to express the parent's state. The child exposes a closed variant (`offset`, `size`) and applies the classes itself.
 - Render props are used only when they improve composition.
 - Render props expose semantic callbacks, not setters.
 - Normal `children` is used when no parent state/actions need to be shared.

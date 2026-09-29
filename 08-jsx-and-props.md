@@ -7,9 +7,30 @@ Load when editing JSX, JSX conditions, props, prop spreading, or component rende
 - Keep JSX readable by extracting complex conditions and computed values before `return`.
 - Avoid deeply nested ternaries in JSX.
 - Use named variables for non-trivial conditions.
+- When a condition only decides whether to render one node, and the other outcome is nothing, use `&&`. The condition must be a boolean (or another value that is clearly only a presence check). Use a ternary when both branches are real values.
+- Do not use `&&` when the condition can be `0` or `''`, or when a prop expects `string | undefined` and `false` would be the wrong value.
 - Use strict comparison in JSX conditions: `===` / `!==`, never `==` / `!=`.
 - Break JSX props onto multiple lines when there are several props or long values.
 - Prefer explicit prop names over spreading unknown props, unless the component is intentionally forwarding props.
+
+```tsx
+// BAD — false branch is empty
+{isOpen ? <Panel /> : null}
+
+// GOOD — presence check renders the node
+{isOpen && <Panel />}
+
+// GOOD — both branches are real values
+{isOpen ? <Panel /> : <Placeholder />}
+label={hasItems ? 'Edit' : 'Add'}
+
+// BAD — boolean drops narrowing; aria-label stays `string | undefined`
+const hasToggle = Boolean(label) && hasContent;
+{hasToggle && <Button aria-label={label} />}
+
+// GOOD — `&&` narrows `label` to `string` for the node it renders
+{label && hasContent && <Button aria-label={label} />}
+```
 
 ## Prop Order
 
@@ -62,6 +83,7 @@ Apply the same order in JSX attributes, destructured props, and TypeScript prop 
 
 - Complex JSX conditions were extracted into named variables.
 - No deeply nested ternaries remain in JSX.
+- Presence checks that render one node use inline `&&` so TypeScript narrows the value. They are not extracted into a `boolean` that drops `string | undefined`. Ternaries stay when both branches are real values.
 - Comparisons in JSX use `===` / `!==`.
 - Props are alphabetical, with `on*` handlers last and `...rest` last of all.
 - Long JSX props are split across lines.
