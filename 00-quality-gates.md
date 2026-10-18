@@ -10,6 +10,8 @@ Load for every code change.
 - Extract repeated or complex logic into named helpers, hooks, or smaller components.
 - Keep logic granular: each function/component should have one clear responsibility.
 - Avoid unrelated refactors while making a targeted change.
+- Lint exceptions live only in `eslint-suppressions.json`; never use `eslint-disable` comments.
+- Never add suppressions, only remove them: after fixing a violation, run `npm run lint:prune`.
 - Use strict equality (`===` / `!==`); never `==` / `!=`.
 - When JSX only shows or hides one node, write the presence check inline with `&&` (`label && <Button aria-label={label} />`). Do not stash it in a `boolean` such as `hasToggle`: that drops narrowing and `string | undefined` stops fitting props that require `string`. Do not "fix" that with `!== undefined` when `&&` already narrows. Details: [`08-jsx-and-props.md`](08-jsx-and-props.md).
 
@@ -19,6 +21,7 @@ Before completing a change, verify:
 
 - No debug logs or temporary debug code remain.
 - No unused code remains.
+- No `eslint-disable` comments and no new entries in `eslint-suppressions.json`; pruned after fixes.
 - Comparisons use `===` / `!==`.
 - A JSX presence check that renders one node is inline `&&`, not a `boolean` that drops narrowing.
 - Repeated UI patterns are represented by one shared component.

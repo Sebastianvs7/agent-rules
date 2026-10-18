@@ -12,7 +12,7 @@ Then load only the topic files that match the task.
 
 ## Load by task
 
-- [`01-formatting.md`](01-formatting.md): load when editing JavaScript, TypeScript, JSX, TSX, JSON-like objects, imports, props, arrays, or multiline code.
+- [`01-formatting.md`](01-formatting.md): load when editing JavaScript, TypeScript, JSX, TSX, JSON-like objects, imports, props, arrays, multiline code, or blank lines between statements.
 - [`02-typescript.md`](02-typescript.md): load when editing `.ts` or `.tsx` files, types, interfaces, hooks, helpers, API data, or type errors.
 - [`03-react-components.md`](03-react-components.md): load when creating or changing React components, shared UI, repeated markup, dialogs, modals, forms, tables, buttons, list items, heading/title parts, or typography/color via atoms.
 - [`04-state-and-callbacks.md`](04-state-and-callbacks.md): load when changing React state, props, event callbacks, parent-child data flow, controlled components, selection/toggle shells, or render props that expose actions.

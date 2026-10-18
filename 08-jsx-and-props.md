@@ -60,6 +60,7 @@ Apply the same order in JSX attributes, destructured props, and TypeScript prop 
 
 ## Logical Blocks And Paired Elements
 
+- Blank lines also separate statements in any TS/JS, not only JSX: see [`01-formatting.md`](01-formatting.md#blank-lines-between-logical-blocks).
 - Put a blank line between logical JSX blocks (e.g. after a `</header>` before the next conditional body).
 - When an element has children, put the opening tag, children, and closing tag on separate lines for readability.
 
