@@ -1,6 +1,6 @@
 # React Composition Rules
 
-Load when designing component composition, choosing a reusable component API model (props-driven vs slots vs compound), reusable logic wrappers, function-as-children APIs, render props, flexible UI slots, deciding whether a shell may rewrite slot children from `state`/`variant`, whether layout-only groups may mix items with trailing adornments, string prop vs composition part, whether to extend an existing root vs wrap it, whether a parent may pass `className` into a child to express the parent's state (it may not — the child exposes a closed variant and owns the classes), or whether a new shell may replace an existing compound's parts with loose `ReactNode` props (it may not — compose the compound).
+Load when designing component composition, choosing a reusable component API model (props-driven vs slots vs compound), reusable logic wrappers, function-as-children APIs, render props, flexible UI slots, deciding whether a shell may rewrite slot children from `state`/`variant`, whether layout-only groups may mix items with trailing adornments, string prop vs composition part, whether to extend an existing root vs wrap it, whether a parent may pass `className` into a child to express the parent's state (it may not — the child exposes a closed variant and owns the classes), or whether a new shell may replace an existing compound's parts with loose `ReactNode` props (it may not — compose the compound), or whether a child may infer state such as `disabled` from an ancestor or sibling via `fieldset`, `group-has-*` or `peer-*` (it may not — pass the prop explicitly).
 
 ## Choose An API Model First
 
@@ -235,6 +235,31 @@ Same for type size, padding, and any other look: the caller picks `size="lg"`, t
 
 `className` on a design-system component, when the project has one and the prop still exists, is only the temporary escape hatch in [`10-design-system-variants.md`](10-design-system-variants.md). It is not how a parent styles a child. Specializing an existing root (the new component *is* that atom) is a different case — see Extend Root above.
 
+## State Comes From Props, Not From The DOM Around It
+
+A component shows a state (`disabled`, `invalid`, `selected`, …) because it received that prop. It does not infer the state from an ancestor or a sibling.
+
+Do not couple two components through CSS or native inheritance:
+
+- no `group-has-[…]/name`, `group-*` or `peer-*` selector in one component that reacts to another component's element
+- no `<fieldset disabled>` (or a similar wrapper) to switch off children that do not know about it
+
+That moves logic into class names, and the state is missing from the child's props, tests and stories. Pass the state explicitly to every part that needs it, e.g. `disabled` to the field and to the checkbox. `group`/`peer` between elements of the **same** component is fine.
+
+```tsx
+// BAD — the label guesses the state from a sibling input; the form relies on fieldset
+<fieldset disabled={locked}>
+  <Checkbox label="Add negative values" />
+</fieldset>
+
+// inside Checkbox
+<label className="group-has-[:disabled]/checkbox:text-slate-500">…</label>
+
+// GOOD — every part gets the state as a prop
+<Checkbox disabled={locked} label="Add negative values" />
+<TargetField disabled={locked} />
+```
+
 ## Render Props
 
 - Use function-as-children / render props when a child needs parent-owned state, computed values, or actions without low-level implementation details.
@@ -268,6 +293,7 @@ Same for type size, padding, and any other look: the caller picks `size="lg"`, t
 - Layout-only list/group children are homogeneous — errors/hints sit as siblings with their own `mt-*`, not inside the item gap.
 - Nested UI reuses existing design-system atoms/molecules when they already exist.
 - A parent does not pass `className` into a child to express the parent's state. The child exposes a closed variant (`offset`, `size`) and applies the classes itself.
+- State such as `disabled` reaches each part as a prop. No `fieldset`, `group-has-*` or `peer-*` coupling between components.
 - Render props are used only when they improve composition.
 - Render props expose semantic callbacks, not setters.
 - Normal `children` is used when no parent state/actions need to be shared.
